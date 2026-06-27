@@ -32,8 +32,8 @@ body,
 }
 
 body {
-  background-color: #0a0a0f;
-  color: #e2e8f0;
+  background-color: #0d1117;
+  color: #e6edf3;
 }
 
 /* 自定义滚动条 - 极简风格 */
@@ -58,13 +58,13 @@ body {
 
 /* 文本选择样式 */
 ::selection {
-  background: rgba(139, 92, 246, 0.25);
+  background: rgba(124, 58, 237, 0.25);
   color: #fff;
 }
 
 /* 焦点状态 - 无障碍友好 */
 :focus-visible {
-  outline: 2px solid rgba(139, 92, 246, 0.5);
+  outline: 2px solid rgba(124, 58, 237, 0.5);
   outline-offset: 2px;
 }
 
