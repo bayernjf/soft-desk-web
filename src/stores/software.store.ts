@@ -5,6 +5,7 @@ import { MOCK_SOFTWARE, MOCK_WORKFLOWS } from '@/data/software.mock';
 interface SoftwareStore {
   software: Software[];
   workflows: Workflow[];
+  favoriteIds: string[];
   selectedCategory: SoftwareCategory | 'all';
   searchQuery: string;
   sortBy: 'name' | 'usage' | 'recent' | 'size';
@@ -14,12 +15,14 @@ interface SoftwareStore {
   launchSoftware: (id: string) => void;
   launchWorkflow: (id: string) => void;
   toggleWorkflowFavorite: (id: string) => void;
+  toggleFavorite: (id: string) => void;
   uninstallSoftware: (id: string) => void;
 }
 
 export const useSoftwareStore = create<SoftwareStore>((set, get) => ({
   software: MOCK_SOFTWARE,
   workflows: MOCK_WORKFLOWS,
+  favoriteIds: ['sw-001', 'sw-003'],
   selectedCategory: 'all',
   searchQuery: '',
   sortBy: 'recent',
@@ -51,6 +54,15 @@ export const useSoftwareStore = create<SoftwareStore>((set, get) => ({
       w.id === id ? { ...w, isFavorite: !w.isFavorite } : w
     );
     set({ workflows });
+  },
+
+  toggleFavorite: (id) => {
+    const { favoriteIds } = get();
+    set({
+      favoriteIds: favoriteIds.includes(id)
+        ? favoriteIds.filter((fid) => fid !== id)
+        : [...favoriteIds, id],
+    });
   },
 
   uninstallSoftware: (id) => {
