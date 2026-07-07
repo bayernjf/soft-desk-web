@@ -1,4 +1,4 @@
-import type { Software, Category, Stats } from './types';
+import type { Software, Category, Stats, Workflow } from './types';
 
 export const mockCategories: Category[] = [
   { id: 'dev', name: '开发工具', icon: 'Code', color: '#00d4aa', count: 12 },
@@ -72,3 +72,46 @@ export const mockStats: Stats = {
     { day: '周日', hours: 2.8 },
   ],
 };
+
+export const mockWorkflows: Workflow[] = [
+  {
+    id: 'wf-1',
+    name: '晨间开发模式',
+    description: '启动 IDE + 终端 + 浏览器，快速进入编码状态',
+    color: '#00d4aa',
+    softwareIds: ['1', '6', '3'],
+    isFavorite: true,
+    usageCount: 89,
+    lastUsed: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+  },
+  {
+    id: 'wf-2',
+    name: '设计评审',
+    description: '打开 Figma + Slack，准备设计讨论',
+    color: '#a371f7',
+    softwareIds: ['2', '4'],
+    isFavorite: true,
+    usageCount: 34,
+    lastUsed: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+  },
+  {
+    id: 'wf-3',
+    name: '文档撰写',
+    description: 'Notion + 浏览器，专注内容创作',
+    color: '#58a6ff',
+    softwareIds: ['5', '9'],
+    isFavorite: false,
+    usageCount: 56,
+    lastUsed: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+  },
+  {
+    id: 'wf-4',
+    name: '修图工作流',
+    description: 'Photoshop + Figma，图像处理与导出',
+    color: '#f87171',
+    softwareIds: ['8', '2'],
+    isFavorite: false,
+    usageCount: 12,
+    lastUsed: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+  },
+];
