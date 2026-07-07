@@ -4,6 +4,7 @@ import type { Software } from '@/types';
 import { useSoftwareStore } from '@/stores/software.store';
 import { formatMinutes, formatTimeAgo } from '@/services/software.service';
 import { cn } from '@/lib/utils';
+import { track } from '@/lib/analytics';
 
 interface SoftwareCardProps {
   software: Software;
@@ -12,12 +13,21 @@ interface SoftwareCardProps {
 
 export function SoftwareCard({ software, variant = 'default' }: SoftwareCardProps) {
   const launchSoftware = useSoftwareStore((s) => s.launchSoftware);
+
+  const handleLaunch = () => {
+    launchSoftware(software.id);
+    track('software_launch', {
+      software_id: software.id,
+      software_name: software.name,
+      software_category: software.category,
+    });
+  };
   const categoryMeta = CATEGORIES.find((c) => c.id === software.category);
 
   if (variant === 'compact') {
     return (
       <button
-        onClick={() => launchSoftware(software.id)}
+        onClick={handleLaunch}
         className={cn(
           'w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all duration-200',
           'bg-slate-900/40 hover:bg-slate-800/70 border border-slate-800/60 hover:border-slate-700'
@@ -41,7 +51,7 @@ export function SoftwareCard({ software, variant = 'default' }: SoftwareCardProp
   if (variant === 'large') {
     return (
       <button
-        onClick={() => launchSoftware(software.id)}
+        onClick={handleLaunch}
         className={cn(
           'w-full p-4 rounded-2xl text-left transition-all duration-300 group',
           'bg-slate-900/50 hover:bg-slate-800/80 border border-slate-800/80 hover:border-slate-700/60',
@@ -104,7 +114,7 @@ export function SoftwareCard({ software, variant = 'default' }: SoftwareCardProp
 
   return (
     <button
-      onClick={() => launchSoftware(software.id)}
+      onClick={handleLaunch}
       className={cn(
         'w-full p-3.5 rounded-2xl text-left transition-all duration-200 group',
         'bg-slate-900/40 hover:bg-slate-800/70 border border-slate-800/60 hover:border-slate-700/80'
