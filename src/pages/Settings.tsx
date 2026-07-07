@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Monitor, Bell, Database, Shield, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { track } from '@/lib/analytics';
+import { AiModelsSection } from '@/components/features/AiModelsSection';
 
 type TabId = 'appearance' | 'notifications' | 'data' | 'privacy' | 'ai';
 
@@ -59,7 +61,16 @@ export function Settings() {
     scanOnStartup: true,
   });
 
-  const togglePref = (key: keyof typeof prefs) => setPrefs((p) => ({ ...p, [key]: !p[key] }));
+  const togglePref = (key: keyof typeof prefs) => {
+    setPrefs((p) => {
+      const newVal = !p[key];
+      track('settings_change', { setting_key: key, setting_value: String(newVal) });
+      if (key === 'smartGrouping' || key === 'aiSuggestions') {
+        track('ai_toggle', { feature: key, enabled: newVal });
+      }
+      return { ...p, [key]: newVal };
+    });
+  };
 
   return (
     <div className="space-y-8">
@@ -75,7 +86,10 @@ export function Settings() {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  track('settings_open', { active_tab: tab.id });
+                }}
                 className={cn(
                   'w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium text-left transition-all',
                   activeTab === tab.id
@@ -200,21 +214,24 @@ export function Settings() {
           )}
 
           {activeTab === 'ai' && (
-            <div className="space-y-0 max-w-lg border-t border-slate-800/80">
+            <div className="space-y-0 max-w-2xl border-t border-slate-800/80">
               <h2 className="text-base font-semibold text-slate-100 mb-1 pt-0">AI 功能</h2>
               <p className="text-sm text-slate-500 mb-6">基于 AI 的智能建议与自动化</p>
-              <Toggle
-                checked={prefs.smartGrouping}
-                onChange={() => togglePref('smartGrouping')}
-                label="智能分类"
-                description="AI 自动将同类软件分组到合适的分类"
-              />
-              <Toggle
-                checked={prefs.aiSuggestions}
-                onChange={() => togglePref('aiSuggestions')}
-                label="工作流建议"
-                description="基于使用习惯，为你推荐常用的软件组合"
-              />
+              <div className="max-w-lg">
+                <Toggle
+                  checked={prefs.smartGrouping}
+                  onChange={() => togglePref('smartGrouping')}
+                  label="智能分类"
+                  description="AI 自动将同类软件分组到合适的分类"
+                />
+                <Toggle
+                  checked={prefs.aiSuggestions}
+                  onChange={() => togglePref('aiSuggestions')}
+                  label="工作流建议"
+                  description="基于使用习惯，为你推荐常用的软件组合"
+                />
+              </div>
+              <AiModelsSection />
             </div>
           )}
         </main>
