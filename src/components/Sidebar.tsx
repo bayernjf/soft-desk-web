@@ -11,8 +11,10 @@ import {
   Sparkles,
   Globe,
   Play,
+  CircleDot,
 } from 'lucide-react';
 import { useStore } from '../store';
+import type { PageType } from '../types';
 
 // Icon mapping
 const iconMap: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
@@ -45,7 +47,11 @@ const utilityItems = [
   { id: 'uninstall', label: '卸载管理', icon: Trash2 },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onOpenRadialMenu?: () => void;
+}
+
+export function Sidebar({ onOpenRadialMenu }: SidebarProps) {
   const { currentPage, setCurrentPage, selectedCategory, setSelectedCategory } = useStore();
 
   return (
@@ -73,7 +79,7 @@ export function Sidebar() {
             return (
               <button
                 key={item.id}
-                onClick={() => setCurrentPage(item.id as any)}
+                onClick={() => setCurrentPage(item.id as PageType)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
                   isActive
                     ? 'bg-[#00d4aa]/10 text-[#00d4aa] border-l-2 border-[#00d4aa]'
@@ -134,7 +140,7 @@ export function Sidebar() {
             return (
               <button
                 key={item.id}
-                onClick={() => setCurrentPage(item.id as any)}
+                onClick={() => setCurrentPage(item.id as PageType)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
                   isActive
                     ? 'bg-[#00d4aa]/10 text-[#00d4aa]'
@@ -148,6 +154,18 @@ export function Sidebar() {
           })}
         </div>
       </nav>
+
+      {/* Radial Menu Quick Access */}
+      <div className="p-3 border-t border-[#30363d]">
+        <button
+          onClick={onOpenRadialMenu}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all bg-gradient-to-r from-[#00d4aa]/10 to-[#58a6ff]/10 border border-[#00d4aa]/30 text-[#00d4aa] hover:from-[#00d4aa]/20 hover:to-[#58a6ff]/20"
+        >
+          <CircleDot className="w-4 h-4" />
+          <span className="flex-1 text-left">径向菜单</span>
+          <span className="text-[10px] text-[#6e7681] bg-[#21262d] px-1.5 py-0.5 rounded">中键</span>
+        </button>
+      </div>
 
       {/* Settings */}
       <div className="p-3 border-t border-[#30363d]">
