@@ -85,6 +85,40 @@ export function setUserProperty(name: string, value: string | boolean) {
   }
 }
 
+const SCROLL_DEPTH_MILESTONES = [25, 50, 75, 100];
+const scrollDepthReported = new Set<number>();
+
+/** 滚动深度追踪 */
+export function trackScrollDepth() {
+  const scrollTop = window.scrollY;
+  const windowHeight = window.innerHeight;
+  const documentHeight = document.documentElement.scrollHeight;
+  const scrollPercent = Math.round((scrollTop / (documentHeight - windowHeight)) * 100);
+
+  for (const milestone of SCROLL_DEPTH_MILESTONES) {
+    if (!scrollDepthReported.has(milestone) && scrollPercent >= milestone) {
+      scrollDepthReported.add(milestone);
+      track('scroll_depth', { depth_percent: milestone });
+    }
+  }
+}
+
+/** 重置滚动深度（页面切换时调用） */
+export function resetScrollDepth() {
+  scrollDepthReported.clear();
+}
+
+/** 追踪元素可见性（Section 进入视口） */
+export function trackElementView(sectionName: string) {
+  if (!isProd) {
+    console.debug('[analytics] landing_section_view', { section_name: sectionName });
+    return;
+  }
+  if (typeof window.gtag === 'function') {
+    window.gtag('event', 'landing_section_view', { section_name: sectionName });
+  }
+}
+
 // ---- 类型声明 ----
 declare global {
   interface Window {
