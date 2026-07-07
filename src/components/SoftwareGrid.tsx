@@ -1,9 +1,9 @@
-import { Grid, List, Sparkles, TrendingUp, Clock, Zap } from 'lucide-react';
+import { Grid, List, Sparkles } from 'lucide-react';
 import { useStore } from '../store';
 import { SoftwareCard } from './SoftwareCard';
 
 export function SoftwareGrid() {
-  const { software, categories, viewMode, setViewMode, searchQuery, selectedCategory } = useStore();
+  const { software, viewMode, setViewMode, searchQuery, selectedCategory } = useStore();
 
   // Filter software based on search and category
   let filteredSoftware = software;

@@ -5,8 +5,6 @@ import { CATEGORIES } from '@/data/categories';
 import { formatMinutes } from '@/services/software.service';
 import { WEEKLY_USAGE } from '@/data/software.mock';
 
-const COLORS = ['#7c3aed', '#ec4899', '#f59e0b', '#8b5cf6', '#f472b6', '#fbbf24', '#a78bfa'];
-
 export function Statistics() {
   const { software } = useSoftwareStore();
 

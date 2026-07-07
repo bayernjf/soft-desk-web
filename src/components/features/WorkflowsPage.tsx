@@ -1,8 +1,6 @@
-import { useMemo } from 'react';
 import { Star, Clock, Play } from 'lucide-react';
 import type { Workflow } from '@/types';
 import { useSoftwareStore } from '@/stores/software.store';
-import { CATEGORIES } from '@/data/categories';
 import { formatTimeAgo } from '@/services/software.service';
 import { cn } from '@/lib/utils';
 

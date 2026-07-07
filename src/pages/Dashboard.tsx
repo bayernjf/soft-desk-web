@@ -11,7 +11,7 @@ function StatCard({
   hint,
   color,
 }: {
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   title: string;
   value: string;
   hint: string;
