@@ -1,13 +1,18 @@
+import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
+import { RadialMenu } from '@/components/RadialMenu';
+import { useSoftwareStore } from '@/stores/software.store';
 import { cn } from '@/lib/utils';
 
 export function Layout() {
   const location = useLocation();
+  const { software, workflows, launchSoftware, launchWorkflow } = useSoftwareStore();
+  const [radialOpen, setRadialOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-slate-100 font-sans antialiased flex overflow-hidden">
-      <Sidebar />
+      <Sidebar onOpenRadialMenu={() => setRadialOpen(true)} />
 
       <main
         className={cn(
@@ -21,6 +26,16 @@ export function Layout() {
           </div>
         </div>
       </main>
+
+      {/* 径向菜单:鼠标中键全局唤起 + Sidebar 按钮唤起 */}
+      <RadialMenu
+        software={software}
+        workflows={workflows}
+        onLaunchSoftware={launchSoftware}
+        onLaunchWorkflow={launchWorkflow}
+        open={radialOpen}
+        onOpenChange={setRadialOpen}
+      />
     </div>
   );
 }
