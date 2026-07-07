@@ -3,6 +3,7 @@ import type { Workflow } from '@/types';
 import { useSoftwareStore } from '@/stores/software.store';
 import { formatTimeAgo } from '@/services/software.service';
 import { cn } from '@/lib/utils';
+import { track } from '@/lib/analytics';
 
 interface WorkflowCardProps {
   workflow: Workflow;
@@ -10,6 +11,23 @@ interface WorkflowCardProps {
 
 function WorkflowCard({ workflow }: WorkflowCardProps) {
   const { software, launchWorkflow, toggleWorkflowFavorite } = useSoftwareStore();
+
+  const handleLaunch = () => {
+    launchWorkflow(workflow.id);
+    track('workflow_run', {
+      workflow_id: workflow.id,
+      workflow_name: workflow.name,
+      step_count: workflow.softwareIds.length,
+    });
+  };
+
+  const handleFavorite = () => {
+    const wasFavorited = workflow.isFavorite;
+    toggleWorkflowFavorite(workflow.id);
+    track(wasFavorited ? 'workflow_unfavorite' : 'workflow_favorite', {
+      workflow_id: workflow.id,
+    });
+  };
   const workflowSoftware = workflow.softwareIds
     .map((id) => software.find((s) => s.id === id))
     .filter(Boolean)
@@ -35,7 +53,7 @@ function WorkflowCard({ workflow }: WorkflowCardProps) {
             <div className="flex items-center gap-2">
               <h3 className="text-base font-semibold text-white">{workflow.name}</h3>
               <button
-                onClick={() => toggleWorkflowFavorite(workflow.id)}
+                onClick={handleFavorite}
                 className="text-amber-400 opacity-80 hover:opacity-100 transition-opacity"
               >
                 <Star className={cn('w-3.5 h-3.5', workflow.isFavorite && 'fill-amber-400')} />
@@ -44,7 +62,7 @@ function WorkflowCard({ workflow }: WorkflowCardProps) {
             <p className="text-xs text-slate-500 mt-1">{workflow.description}</p>
           </div>
           <button
-            onClick={() => launchWorkflow(workflow.id)}
+            onClick={handleLaunch}
             className={cn(
               'px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-1.5',
               'bg-white text-slate-900 hover:bg-slate-100 shadow-lg shadow-slate-900/20',
@@ -98,7 +116,10 @@ export function WorkflowsPage() {
           <h1 className="text-2xl font-bold text-white tracking-tight">工作流</h1>
           <p className="text-sm text-slate-500 mt-1">一键启动你的高效工作组合</p>
         </div>
-        <button className="px-4 py-2 rounded-xl bg-primary-500/20 text-primary-300 text-sm font-medium border border-primary-500/30 hover:bg-primary-500/30 transition-colors">
+        <button 
+          onClick={() => track('workflow_create_start')}
+          className="px-4 py-2 rounded-xl bg-primary-500/20 text-primary-300 text-sm font-medium border border-primary-500/30 hover:bg-primary-500/30 transition-colors"
+        >
           + 创建工作流
         </button>
       </div>
