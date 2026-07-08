@@ -22,6 +22,9 @@ permissions:
 
 env:
   NODE_VERSION: 22
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
   ci-check:
@@ -77,7 +80,7 @@ jobs:
           retention-days: 7
 
   preview-deploy:
-    name: Preview Deploy (Vercel)
+    name: Preview Deploy (CF + Vercel)
     needs: build
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -85,36 +88,71 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
+      - name: Set Node.js version
+        uses: actions/setup-node@v4
         with:
-          name: dist
-          path: dist/
+          node-version: ${{ env.NODE_VERSION }}
 
-      - name: Deploy to Vercel Preview
-        id: vercel-preview
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-build-command: 'echo "Using pre-built artifacts"'
-          working-directory: ./
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Comment PR with preview URL
-        if: steps.vercel-preview.outcome == 'success'
+      - name: Install Wrangler & Vercel CLI
+        run: npm install -g wrangler@3 vercel@latest
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
+          VITE_CLARITY_PROJECT_ID: ${{ secrets.VITE_CLARITY_PROJECT_ID }}
+
+      - name: Deploy to Cloudflare Pages (Preview)
+        id: cf-deploy
+        continue-on-error: true
+        run: |
+          OUTPUT=$(wrangler pages deploy dist --project-name=soft-desk-landing --branch=pr-${{ github.event.pull_request.number }} --commit-dirty=true 2>&1)
+          echo "$OUTPUT"
+          URL=$(echo "$OUTPUT" | grep -oE 'https://[a-zA-Z0-9-]+\.pages\.dev' | head -1)
+          echo "url=$URL" >> $GITHUB_OUTPUT
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy to Vercel (Preview)
+        id: vercel-deploy
+        continue-on-error: true
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          mkdir -p .vercel
+          echo '{"orgId":"'$VERCEL_ORG_ID'","projectId":"'$VERCEL_PROJECT_ID'"}' > .vercel/project.json
+          
+          mkdir -p .vercel/output/static
+          cp -r dist/* .vercel/output/static/
+          echo '{"version":3,"routes":[{"handle":"filesystem"},{"src":"/.*","dest":"/index.html"}]}' > .vercel/output/config.json
+          
+          DEPLOY_OUTPUT=$(vercel deploy --prebuilt --token=$VERCEL_TOKEN --yes 2>&1)
+          echo "$DEPLOY_OUTPUT"
+          
+          DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | grep -o 'https://[^ ]*\.vercel\.app' | head -1)
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+
+      - name: Comment PR with preview URLs
         uses: actions/github-script@v7
         with:
           script: |
-            const url = process.env.VERCEL_URL || 'Check Vercel dashboard';
+            const cfUrl = process.env.CF_URL || '_Deployment failed_';
+            const vercelUrl = process.env.VERCEL_URL || '_Deployment failed_';
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🚀 Preview deployment ready!  \n**Preview URL**: ${url}`
+              body: `🚀 Preview deployments ready!\n\n| Platform | URL |\n|----------|-----|\n| Cloudflare Pages | ${cfUrl} |\n| Vercel | ${vercelUrl} |`
             });
         env:
-          VERCEL_URL: ${{ steps.vercel-preview.outputs.url }}
+          CF_URL: ${{ steps.cf-deploy.outputs.url }}
+          VERCEL_URL: ${{ steps.vercel-deploy.outputs.url }}
 
   deploy-staging:
     name: Deploy Staging (dev → CF + Vercel)
@@ -127,19 +165,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
       - name: Set Node.js version
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install Wrangler
-        run: npm install -g wrangler@3
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Wrangler & Vercel CLI
+        run: npm install -g wrangler@3 vercel@latest
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
+          VITE_CLARITY_PROJECT_ID: ${{ secrets.VITE_CLARITY_PROJECT_ID }}
 
       - name: Deploy to Cloudflare Pages (Staging)
         run: wrangler pages deploy dist --project-name=soft-desk-landing --branch=dev --commit-dirty=true
@@ -147,14 +188,20 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Deploy to Vercel (Preview)
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-build-command: 'echo "Using pre-built artifacts"'
-          working-directory: ./
+      - name: Deploy to Vercel (Staging)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          mkdir -p .vercel
+          echo '{"orgId":"'$VERCEL_ORG_ID'","projectId":"'$VERCEL_PROJECT_ID'"}' > .vercel/project.json
+          
+          mkdir -p .vercel/output/static
+          cp -r dist/* .vercel/output/static/
+          echo '{"version":3,"routes":[{"handle":"filesystem"},{"src":"/.*","dest":"/index.html"}]}' > .vercel/output/config.json
+          
+          vercel deploy --prebuilt --token=$VERCEL_TOKEN --yes
 
   deploy-production:
     name: Deploy Production (main → CF + Vercel)
@@ -167,19 +214,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
       - name: Set Node.js version
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install Wrangler
-        run: npm install -g wrangler@3
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Wrangler & Vercel CLI
+        run: npm install -g wrangler@3 vercel@latest
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
+          VITE_CLARITY_PROJECT_ID: ${{ secrets.VITE_CLARITY_PROJECT_ID }}
 
       - name: Deploy to Cloudflare Pages (Production)
         run: wrangler pages deploy dist --project-name=soft-desk-landing --branch=main --commit-dirty=true
@@ -188,11 +238,16 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy to Vercel (Production)
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          vercel-build-command: 'echo "Using pre-built artifacts"'
-          working-directory: ./
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          mkdir -p .vercel
+          echo '{"orgId":"'$VERCEL_ORG_ID'","projectId":"'$VERCEL_PROJECT_ID'"}' > .vercel/project.json
+          
+          mkdir -p .vercel/output/static
+          cp -r dist/* .vercel/output/static/
+          echo '{"version":3,"routes":[{"handle":"filesystem"},{"src":"/.*","dest":"/index.html"}]}' > .vercel/output/config.json
+          
+          vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN --yes
