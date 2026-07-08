@@ -21,8 +21,7 @@ permissions:
   deployments: write
 
 env:
-  NODE_VERSION: 22
-  WRANGLER_VERSION: 3
+  NODE_VERSION: 24
 
 jobs:
   ci-check:
@@ -68,7 +67,7 @@ jobs:
         run: npm run build
         env:
           VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
-          VITE_CLARITY_PROJECT_ID: ${{ secrets.CLOUDFLARE_CLARITY_PROJECT_ID }}
+          VITE_CLARITY_PROJECT_ID: ${{ secrets.VITE_CLARITY_PROJECT_ID }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -94,28 +93,28 @@ jobs:
 
       - name: Deploy to Vercel Preview
         id: vercel-preview
-        uses: vercel/action@v27
+        uses: amondnet/vercel-action@v20
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-build-command: 'echo "Using pre-built artifacts"'
           working-directory: ./
-          vercel-args: '--build-command ""'
 
       - name: Comment PR with preview URL
-        if: steps.vercel-preview.outcome == 'success' && steps.vercel-preview.outputs.url
+        if: steps.vercel-preview.outcome == 'success'
         uses: actions/github-script@v7
         with:
           script: |
+            const url = process.env.VERCEL_URL || 'Check Vercel dashboard';
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🚀 Preview deployment ready!  \n**Preview URL**: ${process.env.PREVIEW_URL}`
+              body: `🚀 Preview deployment ready!  \n**Preview URL**: ${url}`
             });
         env:
-          PREVIEW_URL: ${{ steps.vercel-preview.outputs.url }}
+          VERCEL_URL: ${{ steps.vercel-preview.outputs.url }}
 
   deploy-staging:
     name: Deploy Staging
@@ -134,29 +133,23 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Install Wrangler
+      - name: Deploy to Cloudflare Pages (Staging)
+        continue-on-error: true
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          version: ${{ env.WRANGLER_VERSION }}
-
-      - name: Deploy to Cloudflare Pages (Staging)
-        continue-on-error: true
-        run: wrangler pages deploy dist --project-name=soft-desk-landing-staging
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: pages deploy dist --project-name=soft-desk-landing-staging
 
       - name: Deploy to Vercel (Preview)
         continue-on-error: true
-        uses: vercel/action@v27
+        uses: amondnet/vercel-action@v20
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-build-command: 'echo "Using pre-built artifacts"'
           working-directory: ./
-          vercel-args: '--build-command ""'
 
   deploy-production:
     name: Deploy Production
@@ -175,24 +168,19 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Install Wrangler
+      - name: Deploy to Cloudflare Pages (Production)
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          version: ${{ env.WRANGLER_VERSION }}
-
-      - name: Deploy to Cloudflare Pages (Production)
-        run: wrangler pages deploy dist --project-name=soft-desk-landing
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: pages deploy dist --project-name=soft-desk-landing
 
       - name: Deploy to Vercel (Production)
-        uses: vercel/action@v27
+        uses: amondnet/vercel-action@v20
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
           vercel-build-command: 'echo "Using pre-built artifacts"'
           working-directory: ./
-          vercel-args: '--prod --build-command ""'
