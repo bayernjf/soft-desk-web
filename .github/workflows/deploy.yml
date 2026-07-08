@@ -21,7 +21,7 @@ permissions:
   deployments: write
 
 env:
-  NODE_VERSION: 24
+  NODE_VERSION: 22
 
 jobs:
   ci-check:
@@ -117,7 +117,7 @@ jobs:
           VERCEL_URL: ${{ steps.vercel-preview.outputs.url }}
 
   deploy-staging:
-    name: Deploy Staging
+    name: Deploy Staging (dev → CF + Vercel)
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
@@ -133,16 +133,21 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Deploy to Cloudflare Pages (Staging)
-        continue-on-error: true
-        uses: cloudflare/wrangler-action@v3
+      - name: Set Node.js version
+        uses: actions/setup-node@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=soft-desk-landing-staging
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Wrangler
+        run: npm install -g wrangler@3
+
+      - name: Deploy to Cloudflare Pages (Staging)
+        run: wrangler pages deploy dist --project-name=soft-desk-landing --branch=dev --commit-dirty=true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy to Vercel (Preview)
-        continue-on-error: true
         uses: amondnet/vercel-action@v20
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -152,7 +157,7 @@ jobs:
           working-directory: ./
 
   deploy-production:
-    name: Deploy Production
+    name: Deploy Production (main → CF + Vercel)
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -168,12 +173,19 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Deploy to Cloudflare Pages (Production)
-        uses: cloudflare/wrangler-action@v3
+      - name: Set Node.js version
+        uses: actions/setup-node@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=soft-desk-landing
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Wrangler
+        run: npm install -g wrangler@3
+
+      - name: Deploy to Cloudflare Pages (Production)
+        run: wrangler pages deploy dist --project-name=soft-desk-landing --branch=main --commit-dirty=true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy to Vercel (Production)
         uses: amondnet/vercel-action@v20
