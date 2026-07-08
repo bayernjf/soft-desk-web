@@ -10,7 +10,6 @@ on:
       - main
       - dev
 
-# Cancel stale runs when a new push arrives on the same ref
 concurrency:
   group: deploy-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -19,12 +18,12 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
+  deployments: write
 
 env:
-  NODE_VERSION: 22
+  NODE_VERSION: 24
 
 jobs:
-  # ---- Quality Gate (runs on every push & PR) ----
   ci-check:
     name: Lint & Type Check
     runs-on: ubuntu-latest
@@ -47,7 +46,6 @@ jobs:
       - name: Type check
         run: npm run check
 
-  # ---- Build (runs after CI passes) ----
   build:
     name: Build
     needs: ci-check
@@ -78,7 +76,6 @@ jobs:
           path: dist/
           retention-days: 7
 
-  # ---- PR Preview Deploy (only on pull_request) ----
   preview-deploy:
     name: Preview Deploy (Vercel)
     needs: build
@@ -94,9 +91,8 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Deploy to Vercel (Preview)
-        id: vercel-deploy
-        continue-on-error: true
+      - name: Deploy to Vercel Preview
+        id: vercel-preview
         uses: amondnet/vercel-action@v20
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -106,23 +102,22 @@ jobs:
           working-directory: ./
 
       - name: Comment PR with preview URL
-        if: steps.vercel-deploy.outcome == 'success'
+        if: steps.vercel-preview.outcome == 'success'
         uses: actions/github-script@v7
         with:
           script: |
-            const previewUrl = process.env.VERCEL_PREVIEW_URL || 'Check Vercel dashboard for preview URL';
+            const url = process.env.VERCEL_URL || 'Check Vercel dashboard';
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🚀 Preview deployment ready!  \n**Preview URL**: ${previewUrl}`
+              body: `🚀 Preview deployment ready!  \n**Preview URL**: ${url}`
             });
         env:
-          VERCEL_PREVIEW_URL: ${{ steps.vercel-deploy.outputs.preview-url }}
+          VERCEL_URL: ${{ steps.vercel-preview.outputs.url }}
 
-  # ---- Deploy to dev branch → Staging environment ----
   deploy-staging:
-    name: Deploy Staging (dev push)
+    name: Deploy Staging
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
@@ -140,15 +135,13 @@ jobs:
 
       - name: Deploy to Cloudflare Pages (Staging)
         continue-on-error: true
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: soft-desk-landing-staging
-          directory: dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy dist --project-name=soft-desk-landing-staging
 
-      - name: Deploy to Vercel (Preview, not prod)
+      - name: Deploy to Vercel (Preview)
         continue-on-error: true
         uses: amondnet/vercel-action@v20
         with:
@@ -158,9 +151,8 @@ jobs:
           vercel-build-command: 'echo "Using pre-built artifacts"'
           working-directory: ./
 
-  # ---- Deploy to main branch → Production environment ----
   deploy-production:
-    name: Deploy Production (main push)
+    name: Deploy Production
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -177,13 +169,11 @@ jobs:
           path: dist/
 
       - name: Deploy to Cloudflare Pages (Production)
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: soft-desk-landing
-          directory: dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy dist --project-name=soft-desk-landing
 
       - name: Deploy to Vercel (Production)
         uses: amondnet/vercel-action@v20
