@@ -10,7 +10,6 @@ on:
       - main
       - dev
 
-# Cancel stale runs when a new push arrives on the same ref
 concurrency:
   group: deploy-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -19,12 +18,13 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
+  deployments: write
 
 env:
   NODE_VERSION: 22
+  WRANGLER_VERSION: 3
 
 jobs:
-  # ---- Quality Gate (runs on every push & PR) ----
   ci-check:
     name: Lint & Type Check
     runs-on: ubuntu-latest
@@ -47,7 +47,6 @@ jobs:
       - name: Type check
         run: npm run check
 
-  # ---- Build (runs after CI passes) ----
   build:
     name: Build
     needs: ci-check
@@ -69,7 +68,7 @@ jobs:
         run: npm run build
         env:
           VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
-          VITE_CLARITY_PROJECT_ID: ${{ secrets.VITE_CLARITY_PROJECT_ID }}
+          VITE_CLARITY_PROJECT_ID: ${{ secrets.CLOUDFLARE_CLARITY_PROJECT_ID }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -78,7 +77,6 @@ jobs:
           path: dist/
           retention-days: 7
 
-  # ---- PR Preview Deploy (only on pull_request) ----
   preview-deploy:
     name: Preview Deploy (Vercel)
     needs: build
@@ -94,35 +92,33 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Deploy to Vercel (Preview)
-        id: vercel-deploy
-        continue-on-error: true
-        uses: amondnet/vercel-action@v20
+      - name: Deploy to Vercel Preview
+        id: vercel-preview
+        uses: vercel/action@v27
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-build-command: 'echo "Using pre-built artifacts"'
           working-directory: ./
+          vercel-args: '--build-command ""'
 
       - name: Comment PR with preview URL
-        if: steps.vercel-deploy.outcome == 'success'
+        if: steps.vercel-preview.outcome == 'success' && steps.vercel-preview.outputs.url
         uses: actions/github-script@v7
         with:
           script: |
-            const previewUrl = process.env.VERCEL_PREVIEW_URL || 'Check Vercel dashboard for preview URL';
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🚀 Preview deployment ready!  \n**Preview URL**: ${previewUrl}`
+              body: `🚀 Preview deployment ready!  \n**Preview URL**: ${process.env.PREVIEW_URL}`
             });
         env:
-          VERCEL_PREVIEW_URL: ${{ steps.vercel-deploy.outputs.preview-url }}
+          PREVIEW_URL: ${{ steps.vercel-preview.outputs.url }}
 
-  # ---- Deploy to dev branch → Staging environment ----
   deploy-staging:
-    name: Deploy Staging (dev push)
+    name: Deploy Staging
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
@@ -138,29 +134,32 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Deploy to Cloudflare Pages (Staging)
-        continue-on-error: true
-        uses: cloudflare/pages-action@v1
+      - name: Install Wrangler
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: soft-desk-landing-staging
-          directory: dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ env.WRANGLER_VERSION }}
 
-      - name: Deploy to Vercel (Preview, not prod)
+      - name: Deploy to Cloudflare Pages (Staging)
         continue-on-error: true
-        uses: amondnet/vercel-action@v20
+        run: wrangler pages deploy dist --project-name=soft-desk-landing-staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Deploy to Vercel (Preview)
+        continue-on-error: true
+        uses: vercel/action@v27
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-build-command: 'echo "Using pre-built artifacts"'
           working-directory: ./
+          vercel-args: '--build-command ""'
 
-  # ---- Deploy to main branch → Production environment ----
   deploy-production:
-    name: Deploy Production (main push)
+    name: Deploy Production
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -176,21 +175,24 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Deploy to Cloudflare Pages (Production)
-        uses: cloudflare/pages-action@v1
+      - name: Install Wrangler
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: soft-desk-landing
-          directory: dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ env.WRANGLER_VERSION }}
+
+      - name: Deploy to Cloudflare Pages (Production)
+        run: wrangler pages deploy dist --project-name=soft-desk-landing
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Deploy to Vercel (Production)
-        uses: amondnet/vercel-action@v20
+        uses: vercel/action@v27
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
           vercel-build-command: 'echo "Using pre-built artifacts"'
           working-directory: ./
+          vercel-args: '--prod --build-command ""'
