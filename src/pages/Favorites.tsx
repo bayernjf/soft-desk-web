@@ -2,10 +2,26 @@ import { Heart, Star, Play, Clock, X } from 'lucide-react';
 import { useSoftwareStore } from '@/stores/software.store';
 import { formatTimeAgo } from '@/services/software.service';
 import { SoftwareCard } from '@/components/features/SoftwareCard';
+import { track } from '@/lib/analytics';
 
 export function Favorites() {
   const { software, workflows, favoriteIds, toggleFavorite, launchWorkflow, toggleWorkflowFavorite } =
     useSoftwareStore();
+
+  const handleToggleFavorite = (id: string, name: string, type: 'software' | 'workflow') => {
+    const wasFavorited = type === 'software' 
+      ? favoriteIds.includes(id) 
+      : workflows.find(w => w.id === id)?.isFavorite;
+    if (type === 'software') {
+      toggleFavorite(id);
+    } else {
+      toggleWorkflowFavorite(id);
+    }
+    track(wasFavorited ? 'favorite_remove' : 'favorite_add', {
+      item_name: name,
+      item_type: type,
+    });
+  };
 
   const favoriteSoftware = software.filter((s) => favoriteIds.includes(s.id));
   const favoriteWorkflows = workflows.filter((w) => w.isFavorite);
@@ -40,7 +56,7 @@ export function Favorites() {
               <div key={app.id} className="relative group">
                 <SoftwareCard software={app} />
                 <button
-                  onClick={() => toggleFavorite(app.id)}
+                  onClick={() => handleToggleFavorite(app.id, app.name, 'software')}
                   className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-slate-900/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-500/20 text-rose-400"
                   title="取消收藏"
                 >
@@ -93,7 +109,7 @@ export function Favorites() {
                         <p className="text-xs text-slate-500 mt-1">{wf.description}</p>
                       </div>
                       <button
-                        onClick={() => toggleWorkflowFavorite(wf.id)}
+                        onClick={() => handleToggleFavorite(wf.id, wf.name, 'workflow')}
                         className="p-1.5 rounded-lg text-amber-400 hover:bg-amber-500/10"
                         title="取消收藏"
                       >

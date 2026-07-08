@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   ArrowRight,
   BarChart3,
@@ -27,6 +27,7 @@ import { CATEGORIES } from '@/data/categories';
 import { formatMinutes, formatTimeAgo } from '@/services/software.service';
 import { cn } from '@/lib/utils';
 import { track } from '@/lib/analytics';
+import { useSectionVisibility, useScrollDepthTracking } from '@/hooks/useAnalytics';
 import type { Software, Workflow as WorkflowType } from '@/types';
 
 // 主题切换 Hook
@@ -342,15 +343,15 @@ function isTouchpadWheel(e: WheelEvent): boolean {
 }
 
 // 径向菜单介绍
-function RadialMenuSection({
-  theme,
-  software,
-  workflows,
-}: {
+const RadialMenuSection = React.forwardRef<HTMLElement, {
   theme: 'light' | 'dark';
   software: Software[];
   workflows: WorkflowType[];
-}) {
+}>(({
+  theme,
+  software,
+  workflows,
+}, ref) => {
   const [demoOpen, setDemoOpen] = useState(false);
   const [previewPage, setPreviewPage] = useState<0 | 1>(0);
   const [animPhase, setAnimPhase] = useState<'idle' | 'out' | 'switch' | 'in'>('idle');
@@ -612,7 +613,7 @@ function RadialMenuSection({
   ];
 
   return (
-    <section id="radial-menu" className={cn('px-6 py-24')}>
+    <section ref={ref} id="radial-menu" className={cn('px-6 py-24')}>
       <div className="max-w-6xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <div
@@ -870,7 +871,7 @@ function RadialMenuSection({
       )}
     </section>
   );
-}
+});
 
 // 统计数据
 function Stats({ theme }: { theme: 'light' | 'dark' }) {
@@ -912,13 +913,13 @@ function Stats({ theme }: { theme: 'light' | 'dark' }) {
 }
 
 // AI 分类演示区
-function AIClassifySection({
-  theme,
-  software,
-}: {
+const AIClassifySection = React.forwardRef<HTMLElement, {
   theme: 'light' | 'dark';
   software: Software[];
-}) {
+}>(({
+  theme,
+  software,
+}, ref) => {
   const { progress, isClassifying, classifiedCount, startClassify } = useClassifyProgress();
 
   const categoryGroups = useMemo(() => {
@@ -929,7 +930,7 @@ function AIClassifySection({
   }, [software]);
 
   return (
-    <section id="ai-classify" className={cn('px-6 py-24', theme === 'light' ? '' : '')}>
+    <section ref={ref} id="ai-classify" className={cn('px-6 py-24', theme === 'light' ? '' : '')}>
       <div className="max-w-6xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <div
@@ -1097,22 +1098,23 @@ function AIClassifySection({
       </div>
     </section>
   );
-}
+});
 
 // 自然语言搜索演示区
-function SearchSection({
-  theme,
-  software,
-}: {
+const SearchSection = React.forwardRef<HTMLElement, {
   theme: 'light' | 'dark';
   software: Software[];
-}) {
+}>(({
+  theme,
+  software,
+}, ref) => {
   const { query, results, isSearching, searchReason, search, clear } = useNaturalSearch(software);
 
   const quickQueries = ['截屏', '修图', '做表格', '写代码'];
 
   return (
     <section
+      ref={ref}
       id="search"
       className={cn(
         'px-6 py-24 border-y',
@@ -1308,20 +1310,20 @@ function SearchSection({
       </div>
     </section>
   );
-}
+});
 
 // 工作流演示区
-function WorkflowSection({
-  theme,
-  workflows,
-  software,
-}: {
+const WorkflowSection = React.forwardRef<HTMLElement, {
   theme: 'light' | 'dark';
   workflows: WorkflowType[];
   software: Software[];
-}) {
+}>(({
+  theme,
+  workflows,
+  software,
+}, ref) => {
   return (
-    <section id="workflow" className={cn('px-6 py-24')}>
+    <section ref={ref} id="workflow" className={cn('px-6 py-24')}>
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
           <div
@@ -1451,23 +1453,24 @@ function WorkflowSection({
       </div>
     </section>
   );
-}
+});
 
 // 收藏夹演示区
-function FavoritesSection({
-  theme,
-  workflows,
-  software,
-}: {
+const FavoritesSection = React.forwardRef<HTMLElement, {
   theme: 'light' | 'dark';
   workflows: WorkflowType[];
   software: Software[];
-}) {
+}>(({
+  theme,
+  workflows,
+  software,
+}, ref) => {
   const favoriteWorkflows = workflows.filter((w) => w.isFavorite);
   const favoriteSoftware = software.filter((s) => s.launchCount > 300);
 
   return (
     <section
+      ref={ref}
       id="favorites"
       className={cn(
         'px-6 py-24 border-y',
@@ -1649,16 +1652,16 @@ function FavoritesSection({
       </div>
     </section>
   );
-}
+});
 
 // 统计可视化演示区
-function StatisticsSection({
-  theme,
-  software,
-}: {
+const StatisticsSection = React.forwardRef<HTMLElement, {
   theme: 'light' | 'dark';
   software: Software[];
-}) {
+}>(({
+  theme,
+  software,
+}, ref) => {
   const totalMinutes = software.reduce((sum, s) => sum + s.usageMinutes, 0);
   const topApps = [...software].sort((a, b) => b.usageMinutes - a.usageMinutes).slice(0, 5);
 
@@ -1676,7 +1679,7 @@ function StatisticsSection({
     .sort((a, b) => b.usage - a.usage);
 
   return (
-    <section id="statistics" className={cn('px-6 py-24')}>
+    <section ref={ref} id="statistics" className={cn('px-6 py-24')}>
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
           <div
@@ -1866,12 +1869,12 @@ function StatisticsSection({
       </div>
     </section>
   );
-}
+});
 
 // CTA 区域
-function CTA({ theme }: { theme: 'light' | 'dark' }) {
+const CTA = React.forwardRef<HTMLElement, { theme: 'light' | 'dark' }>(({ theme }, ref) => {
   return (
-    <section id="cta" className={cn('px-6 py-24')}>
+    <section ref={ref} id="cta" className={cn('px-6 py-24')}>
       <div className="max-w-4xl mx-auto">
         <div
           className={cn(
@@ -1944,7 +1947,7 @@ function CTA({ theme }: { theme: 'light' | 'dark' }) {
       </div>
     </section>
   );
-}
+});
 
 // Footer
 function Footer({ theme }: { theme: 'light' | 'dark' }) {
@@ -2009,6 +2012,16 @@ export function Landing() {
   const { theme, toggle: toggleTheme } = useTheme();
   const { software, workflows, launchSoftware, launchWorkflow } = useSoftwareStore();
 
+  useScrollDepthTracking();
+
+  const radialMenuRef = useSectionVisibility('radial_menu');
+  const aiClassifyRef = useSectionVisibility('ai');
+  const searchRef = useSectionVisibility('search');
+  const workflowRef = useSectionVisibility('workflow');
+  const favoritesRef = useSectionVisibility('favorites');
+  const statisticsRef = useSectionVisibility('statistics');
+  const ctaRef = useSectionVisibility('cta');
+
   return (
     <div
       className={cn(
@@ -2019,14 +2032,14 @@ export function Landing() {
       <Nav theme={theme} toggleTheme={toggleTheme} />
       <main>
         <Hero theme={theme} />
-        <RadialMenuSection theme={theme} software={software} workflows={workflows} />
+        <RadialMenuSection ref={radialMenuRef} theme={theme} software={software} workflows={workflows} />
         <Stats theme={theme} />
-        <AIClassifySection theme={theme} software={software} />
-        <SearchSection theme={theme} software={software} />
-        <WorkflowSection theme={theme} workflows={workflows} software={software} />
-        <FavoritesSection theme={theme} workflows={workflows} software={software} />
-        <StatisticsSection theme={theme} software={software} />
-        <CTA theme={theme} />
+        <AIClassifySection ref={aiClassifyRef} theme={theme} software={software} />
+        <SearchSection ref={searchRef} theme={theme} software={software} />
+        <WorkflowSection ref={workflowRef} theme={theme} workflows={workflows} software={software} />
+        <FavoritesSection ref={favoritesRef} theme={theme} workflows={workflows} software={software} />
+        <StatisticsSection ref={statisticsRef} theme={theme} software={software} />
+        <CTA ref={ctaRef} theme={theme} />
       </main>
       <Footer theme={theme} />
 

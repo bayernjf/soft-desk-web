@@ -1,14 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { RadialMenu } from '@/components/RadialMenu';
 import { useSoftwareStore } from '@/stores/software.store';
 import { cn } from '@/lib/utils';
+import { track, trackPageView } from '@/lib/analytics';
+
+const pageNameMap: Record<string, string> = {
+  '/app': 'dashboard',
+  '/app/library': 'software',
+  '/app/favorites': 'favorites',
+  '/app/workflows': 'workflows',
+  '/app/radial': 'radial_menu',
+  '/app/my-shares': 'shares',
+  '/app/statistics': 'stats',
+  '/app/uninstall': 'cleanup',
+  '/app/settings': 'settings',
+};
 
 export function Layout() {
   const location = useLocation();
   const { software, workflows, launchSoftware, launchWorkflow } = useSoftwareStore();
   const [radialOpen, setRadialOpen] = useState(false);
+
+  useEffect(() => {
+    trackPageView(location.pathname);
+    const pageName = pageNameMap[location.pathname] || 'unknown';
+    track('app_page_view', { page_name: pageName });
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-slate-100 font-sans antialiased flex overflow-hidden">
