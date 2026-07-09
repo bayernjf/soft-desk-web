@@ -206,7 +206,10 @@ function Nav({ theme, toggleTheme }: { theme: 'light' | 'dark'; toggleTheme: () 
             进入工作台
           </Link>
           <a
-            href="#cta"
+            href="https://github.com/bayernjf/soft-desk/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => track('cta_click', { cta_text: '免费下载', cta_location: 'nav' })}
             className={cn(
               'inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-glow-brand hover:scale-[1.02]',
               theme === 'light'
@@ -279,7 +282,10 @@ function Hero({ theme }: { theme: 'light' | 'dark' }) {
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <a
-            href="#cta"
+            href="https://github.com/bayernjf/soft-desk/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => track('cta_click', { cta_text: '免费下载 SoftDesk', cta_location: 'hero' })}
             className={cn(
               'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
               theme === 'light'
@@ -300,7 +306,7 @@ function Hero({ theme }: { theme: 'light' | 'dark' }) {
                 : 'bg-slate-800/60 hover:bg-slate-800 border-slate-700/60 text-slate-200'
             )}
           >
-            <Github className="w-4 h-4" />
+            <Monitor className="w-4 h-4" />
             查看在线演示
           </Link>
         </div>
@@ -1919,7 +1925,10 @@ const CTA = React.forwardRef<HTMLElement, { theme: 'light' | 'dark' }>(({ theme 
           </p>
           <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="#"
+              href="https://github.com/bayernjf/soft-desk/releases"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => track('cta_click', { cta_text: '免费下载 SoftDesk', cta_location: 'bottom' })}
               className={cn(
                 'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
                 theme === 'light'
@@ -1993,13 +2002,27 @@ function Footer({ theme }: { theme: 'light' | 'dark' }) {
             工作流
           </a>
           <a
-            href="#cta"
+            href="https://github.com/bayernjf/soft-desk/releases"
+            target="_blank"
+            rel="noopener noreferrer"
             className={cn(
               'transition-colors',
               theme === 'light' ? 'hover:text-slate-700' : 'hover:text-slate-300'
             )}
           >
             下载
+          </a>
+          <a
+            href="https://github.com/bayernjf/soft-desk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              'flex items-center gap-1 transition-colors',
+              theme === 'light' ? 'hover:text-slate-700' : 'hover:text-slate-300'
+            )}
+          >
+            <Github className="w-3.5 h-3.5" />
+            GitHub
           </a>
         </div>
       </div>
