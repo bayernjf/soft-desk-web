@@ -195,6 +195,29 @@ function Nav({ theme, toggleTheme }: { theme: 'light' | 'dark'; toggleTheme: () 
           >
             {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
           </button>
+          <Link
+            to="/app"
+            onClick={() => track('cta_click', { cta_text: '进入演示', cta_location: 'nav' })}
+            className={cn(
+              'hidden sm:inline-flex text-sm transition-colors',
+              theme === 'light' ? 'text-slate-500 hover:text-slate-800' : 'text-slate-400 hover:text-white'
+            )}
+          >
+            进入演示
+          </Link>
+          <a
+            href="#cta"
+            onClick={() => track('cta_click', { cta_text: '免费下载', cta_location: 'nav' })}
+            className={cn(
+              'inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-glow-brand hover:scale-[1.02]',
+              theme === 'light'
+                ? 'bg-primary-500 hover:bg-primary-600 text-white'
+                : 'bg-primary-500 hover:bg-primary-600 text-white'
+            )}
+          >
+            免费下载
+            <ArrowRight className="w-3.5 h-3.5" />
+          </a>
         </div>
       </div>
     </header>
@@ -203,6 +226,45 @@ function Nav({ theme, toggleTheme }: { theme: 'light' | 'dark'; toggleTheme: () 
 
 // Hero 区域
 function Hero({ theme }: { theme: 'light' | 'dark' }) {
+  const [downloadUrls, setDownloadUrls] = useState<{ mac: string; win: string }>({ mac: '', win: '' });
+
+  useEffect(() => {
+    const fetchLatestRelease = async () => {
+      try {
+        const response = await fetch('https://api.github.com/repos/bayernjf/soft-desk/releases/latest');
+        const data = await response.json();
+        const assets = data.assets || [];
+        const macAsset = assets.find((a: { name: string }) => a.name.endsWith('.dmg'));
+        const winAsset = assets.find((a: { name: string }) => a.name.endsWith('.exe'));
+        setDownloadUrls({
+          mac: macAsset?.browser_download_url || '',
+          win: winAsset?.browser_download_url || '',
+        });
+      } catch {
+        setDownloadUrls({ mac: '', win: '' });
+      }
+    };
+    fetchLatestRelease();
+  }, []);
+
+  const handleDownloadMac = () => {
+    track('cta_click', { cta_text: '下载Mac', cta_location: 'hero' });
+    if (downloadUrls.mac) {
+      window.location.href = downloadUrls.mac;
+    } else {
+      window.open('https://github.com/bayernjf/soft-desk/releases', '_blank');
+    }
+  };
+
+  const handleDownloadWin = () => {
+    track('cta_click', { cta_text: '下载Win', cta_location: 'hero' });
+    if (downloadUrls.win) {
+      window.location.href = downloadUrls.win;
+    } else {
+      window.open('https://github.com/bayernjf/soft-desk/releases', '_blank');
+    }
+  };
+
   return (
     <section className="relative pt-40 pb-24 px-6 overflow-hidden">
       <div className="absolute inset-0 -z-10">
@@ -257,11 +319,8 @@ function Hero({ theme }: { theme: 'light' | 'dark' }) {
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <div className="flex flex-col sm:flex-row gap-3">
-            <a
-              href="https://github.com/bayernjf/soft-desk/releases"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => track('cta_click', { cta_text: '下载Mac', cta_location: 'hero' })}
+            <button
+              onClick={handleDownloadMac}
               className={cn(
                 'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
                 theme === 'light'
@@ -271,12 +330,9 @@ function Hero({ theme }: { theme: 'light' | 'dark' }) {
             >
               下载Mac
               <ArrowRight className="w-4 h-4" />
-            </a>
-            <a
-              href="https://github.com/bayernjf/soft-desk/releases"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => track('cta_click', { cta_text: '下载Win', cta_location: 'hero' })}
+            </button>
+            <button
+              onClick={handleDownloadWin}
               className={cn(
                 'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
                 theme === 'light'
@@ -286,7 +342,7 @@ function Hero({ theme }: { theme: 'light' | 'dark' }) {
             >
               下载Win
               <ArrowRight className="w-4 h-4" />
-            </a>
+            </button>
           </div>
           <Link
             to="/app"
@@ -1871,6 +1927,44 @@ const StatisticsSection = React.forwardRef<HTMLElement, {
 
 // CTA 区域
 const CTA = React.forwardRef<HTMLElement, { theme: 'light' | 'dark' }>(({ theme }, ref) => {
+  const [downloadUrls, setDownloadUrls] = useState<{ mac: string; win: string }>({ mac: '', win: '' });
+
+  useEffect(() => {
+    const fetchLatestRelease = async () => {
+      try {
+        const response = await fetch('https://api.github.com/repos/bayernjf/soft-desk/releases/latest');
+        const data = await response.json();
+        const assets = data.assets || [];
+        const macAsset = assets.find((a: { name: string }) => a.name.endsWith('.dmg'));
+        const winAsset = assets.find((a: { name: string }) => a.name.endsWith('.exe'));
+        setDownloadUrls({
+          mac: macAsset?.browser_download_url || '',
+          win: winAsset?.browser_download_url || '',
+        });
+      } catch {
+        setDownloadUrls({ mac: '', win: '' });
+      }
+    };
+    fetchLatestRelease();
+  }, []);
+
+  const handleDownloadMac = () => {
+    track('cta_click', { cta_text: '下载Mac', cta_location: 'bottom' });
+    if (downloadUrls.mac) {
+      window.location.href = downloadUrls.mac;
+    } else {
+      window.open('https://github.com/bayernjf/soft-desk/releases', '_blank');
+    }
+  };
+
+  const handleDownloadWin = () => {
+    track('cta_click', { cta_text: '下载Win', cta_location: 'bottom' });
+    if (downloadUrls.win) {
+      window.location.href = downloadUrls.win;
+    } else {
+      window.open('https://github.com/bayernjf/soft-desk/releases', '_blank');
+    }
+  };
   return (
     <section ref={ref} id="cta" className={cn('px-6 py-24')}>
       <div className="max-w-4xl mx-auto">
@@ -1917,11 +2011,8 @@ const CTA = React.forwardRef<HTMLElement, { theme: 'light' | 'dark' }>(({ theme 
           </p>
           <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
             <div className="flex flex-col sm:flex-row gap-3">
-              <a
-                href="https://github.com/bayernjf/soft-desk/releases"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => track('cta_click', { cta_text: '下载Mac', cta_location: 'bottom' })}
+              <button
+                onClick={handleDownloadMac}
                 className={cn(
                   'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
                   theme === 'light'
@@ -1931,12 +2022,9 @@ const CTA = React.forwardRef<HTMLElement, { theme: 'light' | 'dark' }>(({ theme 
               >
                 下载Mac
                 <ArrowRight className="w-4 h-4" />
-              </a>
-              <a
-                href="https://github.com/bayernjf/soft-desk/releases"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => track('cta_click', { cta_text: '下载Win', cta_location: 'bottom' })}
+              </button>
+              <button
+                onClick={handleDownloadWin}
                 className={cn(
                   'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
                   theme === 'light'
@@ -1946,7 +2034,7 @@ const CTA = React.forwardRef<HTMLElement, { theme: 'light' | 'dark' }>(({ theme 
               >
                 下载Win
                 <ArrowRight className="w-4 h-4" />
-              </a>
+              </button>
             </div>
             <Link
               to="/app"
