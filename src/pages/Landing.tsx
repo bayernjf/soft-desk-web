@@ -28,6 +28,7 @@ import { formatMinutes, formatTimeAgo } from '@/services/software.service';
 import { cn } from '@/lib/utils';
 import { track } from '@/lib/analytics';
 import { useSectionVisibility, useScrollDepthTracking } from '@/hooks/useAnalytics';
+import { useDownloadUrls } from '@/hooks/useDownloadUrls';
 import type { Software, Workflow as WorkflowType } from '@/types';
 
 // 主题切换 Hook
@@ -226,56 +227,16 @@ function Nav({ theme, toggleTheme }: { theme: 'light' | 'dark'; toggleTheme: () 
 
 // Hero 区域
 function Hero({ theme }: { theme: 'light' | 'dark' }) {
-  const [downloadUrls, setDownloadUrls] = useState<{ mac: string; win: string }>({ mac: '', win: '' });
-
-  useEffect(() => {
-    const fetchLatestRelease = async () => {
-      try {
-        const response = await fetch('https://github.com/bayernjf/soft-desk/releases/latest', {
-          headers: { Accept: 'text/html' },
-        });
-        const html = await response.text();
-        const macMatch = html.match(/href="([^"]+soft-desk[^"]+\.dmg)"/i);
-        const winMatch = html.match(/href="([^"]+soft-desk[^"]+\.exe)"/i);
-        setDownloadUrls({
-          mac: macMatch ? `https://github.com${macMatch[1]}` : '',
-          win: winMatch ? `https://github.com${winMatch[1]}` : '',
-        });
-      } catch {
-        setDownloadUrls({ mac: '', win: '' });
-      }
-    };
-    fetchLatestRelease();
-  }, []);
+  const { downloadMac, downloadWin } = useDownloadUrls();
 
   const handleDownloadMac = () => {
     track('cta_click', { cta_text: '下载Mac', cta_location: 'hero' });
-    if (downloadUrls.mac) {
-      const link = document.createElement('a');
-      link.href = downloadUrls.mac;
-      link.download = '';
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      window.open('https://github.com/bayernjf/soft-desk/releases', '_blank');
-    }
+    downloadMac();
   };
 
   const handleDownloadWin = () => {
     track('cta_click', { cta_text: '下载Win', cta_location: 'hero' });
-    if (downloadUrls.win) {
-      const link = document.createElement('a');
-      link.href = downloadUrls.win;
-      link.download = '';
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      window.open('https://github.com/bayernjf/soft-desk/releases', '_blank');
-    }
+    downloadWin();
   };
 
   return (
@@ -1940,57 +1901,18 @@ const StatisticsSection = React.forwardRef<HTMLElement, {
 
 // CTA 区域
 const CTA = React.forwardRef<HTMLElement, { theme: 'light' | 'dark' }>(({ theme }, ref) => {
-  const [downloadUrls, setDownloadUrls] = useState<{ mac: string; win: string }>({ mac: '', win: '' });
-
-  useEffect(() => {
-    const fetchLatestRelease = async () => {
-      try {
-        const response = await fetch('https://github.com/bayernjf/soft-desk/releases/latest', {
-          headers: { Accept: 'text/html' },
-        });
-        const html = await response.text();
-        const macMatch = html.match(/href="([^"]+soft-desk[^"]+\.dmg)"/i);
-        const winMatch = html.match(/href="([^"]+soft-desk[^"]+\.exe)"/i);
-        setDownloadUrls({
-          mac: macMatch ? `https://github.com${macMatch[1]}` : '',
-          win: winMatch ? `https://github.com${winMatch[1]}` : '',
-        });
-      } catch {
-        setDownloadUrls({ mac: '', win: '' });
-      }
-    };
-    fetchLatestRelease();
-  }, []);
+  const { downloadMac, downloadWin } = useDownloadUrls();
 
   const handleDownloadMac = () => {
     track('cta_click', { cta_text: '下载Mac', cta_location: 'bottom' });
-    if (downloadUrls.mac) {
-      const link = document.createElement('a');
-      link.href = downloadUrls.mac;
-      link.download = '';
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      window.open('https://github.com/bayernjf/soft-desk/releases', '_blank');
-    }
+    downloadMac();
   };
 
   const handleDownloadWin = () => {
     track('cta_click', { cta_text: '下载Win', cta_location: 'bottom' });
-    if (downloadUrls.win) {
-      const link = document.createElement('a');
-      link.href = downloadUrls.win;
-      link.download = '';
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      window.open('https://github.com/bayernjf/soft-desk/releases', '_blank');
-    }
+    downloadWin();
   };
+
   return (
     <section ref={ref} id="cta" className={cn('px-6 py-24')}>
       <div className="max-w-4xl mx-auto">
