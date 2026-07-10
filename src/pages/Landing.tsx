@@ -256,21 +256,38 @@ function Hero({ theme }: { theme: 'light' | 'dark' }) {
         </p>
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <a
-            href="https://github.com/bayernjf/soft-desk/releases"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => track('cta_click', { cta_text: '免费下载 SoftDesk', cta_location: 'hero' })}
-            className={cn(
-              'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
-              theme === 'light'
-                ? 'bg-primary-500 hover:bg-primary-600 text-white'
-                : 'bg-primary-500 hover:bg-primary-600 text-white'
-            )}
-          >
-            免费下载 SoftDesk
-            <ArrowRight className="w-4 h-4" />
-          </a>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <a
+              href="https://github.com/bayernjf/soft-desk/releases"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => track('cta_click', { cta_text: '下载Mac', cta_location: 'hero' })}
+              className={cn(
+                'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
+                theme === 'light'
+                  ? 'bg-primary-500 hover:bg-primary-600 text-white'
+                  : 'bg-primary-500 hover:bg-primary-600 text-white'
+              )}
+            >
+              下载Mac
+              <ArrowRight className="w-4 h-4" />
+            </a>
+            <a
+              href="https://github.com/bayernjf/soft-desk/releases"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => track('cta_click', { cta_text: '下载Win', cta_location: 'hero' })}
+              className={cn(
+                'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
+                theme === 'light'
+                  ? 'bg-primary-500 hover:bg-primary-600 text-white'
+                  : 'bg-primary-500 hover:bg-primary-600 text-white'
+              )}
+            >
+              下载Win
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          </div>
           <Link
             to="/app"
             onClick={() => track('cta_click', { cta_text: '查看在线演示', cta_location: 'hero' })}
