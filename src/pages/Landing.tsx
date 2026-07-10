@@ -231,14 +231,15 @@ function Hero({ theme }: { theme: 'light' | 'dark' }) {
   useEffect(() => {
     const fetchLatestRelease = async () => {
       try {
-        const response = await fetch('https://api.github.com/repos/bayernjf/soft-desk/releases/latest');
-        const data = await response.json();
-        const assets = data.assets || [];
-        const macAsset = assets.find((a: { name: string }) => a.name.endsWith('.dmg'));
-        const winAsset = assets.find((a: { name: string }) => a.name.endsWith('.exe'));
+        const response = await fetch('https://github.com/bayernjf/soft-desk/releases/latest', {
+          headers: { Accept: 'text/html' },
+        });
+        const html = await response.text();
+        const macMatch = html.match(/href="([^"]+soft-desk[^"]+\.dmg)"/i);
+        const winMatch = html.match(/href="([^"]+soft-desk[^"]+\.exe)"/i);
         setDownloadUrls({
-          mac: macAsset?.browser_download_url || '',
-          win: winAsset?.browser_download_url || '',
+          mac: macMatch ? `https://github.com${macMatch[1]}` : '',
+          win: winMatch ? `https://github.com${winMatch[1]}` : '',
         });
       } catch {
         setDownloadUrls({ mac: '', win: '' });
@@ -250,7 +251,13 @@ function Hero({ theme }: { theme: 'light' | 'dark' }) {
   const handleDownloadMac = () => {
     track('cta_click', { cta_text: '下载Mac', cta_location: 'hero' });
     if (downloadUrls.mac) {
-      window.location.href = downloadUrls.mac;
+      const link = document.createElement('a');
+      link.href = downloadUrls.mac;
+      link.download = '';
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } else {
       window.open('https://github.com/bayernjf/soft-desk/releases', '_blank');
     }
