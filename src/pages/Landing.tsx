@@ -342,7 +342,7 @@ function Hero({ theme }: { theme: 'light' | 'dark' }) {
             >
               下载Win
               <ArrowRight className="w-4 h-4" />
-            </a>
+            </button>
           </div>
           <Link
             to="/app"
