@@ -11,6 +11,7 @@ import {
   ChevronRight,
   CircleDot,
   Share2,
+  ArrowRight,
 } from 'lucide-react';
 import { BrandMark } from '@/components/BrandMark';
 import { useSoftwareStore } from '@/stores/software.store';
@@ -144,7 +145,15 @@ export function Sidebar({ onOpenRadialMenu }: SidebarProps) {
         </div>
       </div>
 
-      <div className="p-3 border-t border-slate-800/60">
+      <div className="p-3 border-t border-slate-800/60 space-y-2">
+        <a
+          href="/#cta"
+          onClick={() => track('cta_click', { cta_text: '免费下载', cta_location: 'sidebar' })}
+          className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 transition-colors shadow-lg shadow-primary-500/20"
+        >
+          免费下载
+          <ArrowRight className="w-4 h-4" />
+        </a>
         <NavLink
           to="/app/settings"
           className={({ isActive }) =>
