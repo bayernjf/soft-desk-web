@@ -195,6 +195,29 @@ function Nav({ theme, toggleTheme }: { theme: 'light' | 'dark'; toggleTheme: () 
           >
             {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
           </button>
+          <Link
+            to="/app"
+            onClick={() => track('cta_click', { cta_text: '进入演示', cta_location: 'nav' })}
+            className={cn(
+              'hidden sm:inline-flex text-sm transition-colors',
+              theme === 'light' ? 'text-slate-500 hover:text-slate-800' : 'text-slate-400 hover:text-white'
+            )}
+          >
+            进入演示
+          </Link>
+          <a
+            href="#cta"
+            onClick={() => track('cta_click', { cta_text: '免费下载', cta_location: 'nav' })}
+            className={cn(
+              'inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-glow-brand hover:scale-[1.02]',
+              theme === 'light'
+                ? 'bg-primary-500 hover:bg-primary-600 text-white'
+                : 'bg-primary-500 hover:bg-primary-600 text-white'
+            )}
+          >
+            免费下载
+            <ArrowRight className="w-3.5 h-3.5" />
+          </a>
         </div>
       </div>
     </header>
