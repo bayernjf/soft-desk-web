@@ -2011,11 +2011,8 @@ const CTA = React.forwardRef<HTMLElement, { theme: 'light' | 'dark' }>(({ theme 
           </p>
           <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
             <div className="flex flex-col sm:flex-row gap-3">
-              <a
-                href="https://github.com/bayernjf/soft-desk/releases"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => track('cta_click', { cta_text: '下载Mac', cta_location: 'bottom' })}
+              <button
+                onClick={handleDownloadMac}
                 className={cn(
                   'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
                   theme === 'light'
@@ -2025,12 +2022,9 @@ const CTA = React.forwardRef<HTMLElement, { theme: 'light' | 'dark' }>(({ theme 
               >
                 下载Mac
                 <ArrowRight className="w-4 h-4" />
-              </a>
-              <a
-                href="https://github.com/bayernjf/soft-desk/releases"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => track('cta_click', { cta_text: '下载Win', cta_location: 'bottom' })}
+              </button>
+              <button
+                onClick={handleDownloadWin}
                 className={cn(
                   'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
                   theme === 'light'
