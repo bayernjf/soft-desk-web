@@ -1980,7 +1980,13 @@ const CTA = React.forwardRef<HTMLElement, { theme: 'light' | 'dark' }>(({ theme 
   const handleDownloadWin = () => {
     track('cta_click', { cta_text: '下载Win', cta_location: 'bottom' });
     if (downloadUrls.win) {
-      window.location.href = downloadUrls.win;
+      const link = document.createElement('a');
+      link.href = downloadUrls.win;
+      link.download = '';
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } else {
       window.open('https://github.com/bayernjf/soft-desk/releases', '_blank');
     }
