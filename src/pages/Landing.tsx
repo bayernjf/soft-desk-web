@@ -2050,10 +2050,7 @@ function Footer({ theme }: { theme: 'light' | 'dark' }) {
             href="https://github.com/bayernjf/soft-desk"
             target="_blank"
             rel="noopener noreferrer"
-            className={cn(
-              'hidden flex items-center gap-1 transition-colors',
-              theme === 'light' ? 'hover:text-slate-700' : 'hover:text-slate-300'
-            )}
+            className="hidden"
           >
             <Github className="w-3.5 h-3.5" />
             GitHub
