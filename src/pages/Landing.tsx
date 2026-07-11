@@ -26,7 +26,7 @@ import { useSoftwareStore } from '@/stores/software.store';
 import { CATEGORIES } from '@/data/categories';
 import { formatMinutes, formatTimeAgo } from '@/services/software.service';
 import { cn } from '@/lib/utils';
-import { track } from '@/lib/analytics';
+import { track, trackPageView } from '@/lib/analytics';
 import { useSectionVisibility, useScrollDepthTracking } from '@/hooks/useAnalytics';
 import { useDownloadUrls } from '@/hooks/useDownloadUrls';
 import type { Software, Workflow as WorkflowType } from '@/types';
@@ -59,6 +59,7 @@ function useClassifyProgress() {
   const [classifiedCount, setClassifiedCount] = useState(0);
 
   const startClassify = () => {
+    track('ai_classify_demo_click');
     setIsClassifying(true);
     setProgress(0);
     setClassifiedCount(0);
@@ -172,6 +173,7 @@ function Nav({ theme, toggleTheme }: { theme: 'light' | 'dark'; toggleTheme: () 
             <a
               key={l.href}
               href={l.href}
+              onClick={() => track('nav_anchor_click', { section: l.label })}
               className={cn(
                 'text-sm transition-colors',
                 theme === 'light'
@@ -755,6 +757,7 @@ const RadialMenuSection = React.forwardRef<HTMLElement, {
               <button
                 onClick={() => {
                   if (animPhase === 'idle') {
+                    track('radial_preview_page_switch', { from: previewPage, to: 0 });
                     wheelDirRef.current = -1;
                     setAnimPhase('out');
                   }
@@ -773,6 +776,7 @@ const RadialMenuSection = React.forwardRef<HTMLElement, {
               <button
                 onClick={() => {
                   if (animPhase === 'idle') {
+                    track('radial_preview_page_switch', { from: previewPage, to: 1 });
                     wheelDirRef.current = 1;
                     setAnimPhase('out');
                   }
@@ -1201,7 +1205,12 @@ const SearchSection = React.forwardRef<HTMLElement, {
             />
             <input
               value={query}
-              onChange={(e) => search(e.target.value)}
+              onChange={(e) => {
+                search(e.target.value);
+                if (e.target.value.length === 1) {
+                  track('search_demo_start');
+                }
+              }}
               placeholder="输入描述来搜索软件，如「截屏工具」「修图」..."
               className={cn(
                 'w-full pl-12 pr-10 py-4 rounded-xl text-sm transition-all',
@@ -1230,7 +1239,10 @@ const SearchSection = React.forwardRef<HTMLElement, {
             {quickQueries.map((q) => (
               <button
                 key={q}
-                onClick={() => search(q)}
+                onClick={() => {
+                  track('search_demo_quick_click', { query: q });
+                  search(q);
+                }}
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   theme === 'light'
@@ -2030,6 +2042,7 @@ function Footer({ theme }: { theme: 'light' | 'dark' }) {
         >
           <a
             href="#ai-classify"
+            onClick={() => track('footer_link_click', { link: '功能' })}
             className={cn(
               'transition-colors',
               theme === 'light' ? 'hover:text-slate-700' : 'hover:text-slate-300'
@@ -2039,6 +2052,7 @@ function Footer({ theme }: { theme: 'light' | 'dark' }) {
           </a>
           <a
             href="#workflow"
+            onClick={() => track('footer_link_click', { link: '工作流' })}
             className={cn(
               'transition-colors',
               theme === 'light' ? 'hover:text-slate-700' : 'hover:text-slate-300'
@@ -2047,10 +2061,26 @@ function Footer({ theme }: { theme: 'light' | 'dark' }) {
             工作流
           </a>
           <a
+            href="https://github.com/bayernjf/soft-desk/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => track('outbound_click', { destination: 'releases', location: 'footer' })}
+            className={cn(
+              'transition-colors',
+              theme === 'light' ? 'hover:text-slate-700' : 'hover:text-slate-300'
+            )}
+          >
+            下载
+          </a>
+          <a
             href="https://github.com/bayernjf/soft-desk"
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden"
+            onClick={() => track('outbound_click', { destination: 'github_repo', location: 'footer' })}
+            className={cn(
+              'flex items-center gap-1 transition-colors',
+              theme === 'light' ? 'hover:text-slate-700' : 'hover:text-slate-300'
+            )}
           >
             <Github className="w-3.5 h-3.5" />
             GitHub
@@ -2065,6 +2095,10 @@ function Footer({ theme }: { theme: 'light' | 'dark' }) {
 export function Landing() {
   const { theme, toggle: toggleTheme } = useTheme();
   const { software, workflows, launchSoftware, launchWorkflow } = useSoftwareStore();
+
+  useEffect(() => {
+    trackPageView('/', 'SoftDesk · AI 驱动的桌面软件智能指挥中心');
+  }, []);
 
   useScrollDepthTracking();
 
