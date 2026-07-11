@@ -41,24 +41,11 @@ export function initAnalytics() {
 
   // Clarity
   if (CLARITY_PROJECT_ID) {
-    const c = window as unknown as Record<string, unknown>;
-    const l = document;
-    const a = 'clarity';
-    const r = 'script';
-    const i = CLARITY_PROJECT_ID;
-    c[a] =
-      c[a] ||
-      function () {
-        const clarityObj = c as Record<string, { q?: unknown[] }>;
-        clarityObj[a].q = clarityObj[a].q || [];
-        // eslint-disable-next-line prefer-rest-params
-        clarityObj[a].q!.push(arguments);
-      };
-    const t = l.createElement(r) as HTMLScriptElement;
-    t.async = true;
-    t.src = 'https://www.clarity.ms/tag/' + i;
-    const y = l.getElementsByTagName(r)[0];
-    y.parentNode?.insertBefore(t, y);
+    const script = document.createElement('script');
+    script.async = true;
+    const projectId = CLARITY_PROJECT_ID.replace(/^\/tag\//, '').replace(/^https?:\/\/.*\/tag\//, '');
+    script.src = `https://www.clarity.ms/tag/${projectId}`;
+    document.head.appendChild(script);
   }
 }
 
