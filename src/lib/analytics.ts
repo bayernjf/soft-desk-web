@@ -18,26 +18,28 @@ export function initAnalytics() {
 
   // GA4
   if (GA_MEASUREMENT_ID) {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function gtag() {
+      // eslint-disable-next-line prefer-rest-params
+      window.dataLayer!.push(arguments);
+    } as (...args: unknown[]) => void;
+    window.gtag('js', new Date());
+    window.gtag('config', GA_MEASUREMENT_ID, { send_page_view: false });
+
     const script = document.createElement('script');
     script.async = true;
     script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
     document.head.appendChild(script);
-
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = function gtag(...args: unknown[]) {
-      window.dataLayer!.push(args);
-    };
-    window.gtag('js', new Date());
-    window.gtag('config', GA_MEASUREMENT_ID, { send_page_view: false });
   }
 
   // Clarity
   if (CLARITY_PROJECT_ID) {
     window.clarity =
       window.clarity ||
-      function (...args: unknown[]) {
-        (window.clarity.q = window.clarity.q || []).push(args);
-      };
+      function () {
+        // eslint-disable-next-line prefer-rest-params
+        (window.clarity.q = window.clarity.q || []).push(arguments);
+      } as ((...args: unknown[]) => void) & { q?: unknown[] };
     window.clarity.q = window.clarity.q || [];
     const script = document.createElement('script');
     script.async = true;
@@ -66,8 +68,8 @@ export function trackPageView(path?: string, title?: string) {
     console.debug('[analytics] page_view', { page_path: pagePath, page_title: pageTitle });
     return;
   }
-  if (typeof window.gtag === 'function' && GA_MEASUREMENT_ID) {
-    window.gtag('config', GA_MEASUREMENT_ID, {
+  if (typeof window.gtag === 'function') {
+    window.gtag('event', 'page_view', {
       page_path: pagePath,
       page_title: pageTitle,
     });
