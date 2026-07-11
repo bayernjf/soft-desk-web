@@ -23,6 +23,13 @@ export function initAnalytics() {
       // eslint-disable-next-line prefer-rest-params
       window.dataLayer!.push(arguments);
     } as (...args: unknown[]) => void;
+    window.gtag('consent', 'default', {
+      ad_storage: 'granted',
+      analytics_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted',
+      wait_for_update: 0,
+    });
     window.gtag('js', new Date());
     window.gtag('config', GA_MEASUREMENT_ID, { send_page_view: false });
 
