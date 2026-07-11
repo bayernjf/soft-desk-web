@@ -43,8 +43,7 @@ export function initAnalytics() {
   if (CLARITY_PROJECT_ID) {
     const script = document.createElement('script');
     script.async = true;
-    const projectId = CLARITY_PROJECT_ID.replace(/^\/tag\//, '').replace(/^https?:\/\/.*\/tag\//, '');
-    script.src = `https://www.clarity.ms/tag/${projectId}`;
+    script.src = `https://www.clarity.ms/tag/${CLARITY_PROJECT_ID}`;
     document.head.appendChild(script);
   }
 }
