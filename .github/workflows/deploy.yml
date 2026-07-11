@@ -111,7 +111,11 @@ jobs:
         run: |
           OUTPUT=$(wrangler pages deploy dist --project-name=soft-desk-landing --branch=pr-${{ github.event.pull_request.number }} --commit-dirty=true 2>&1)
           echo "$OUTPUT"
-          URL=$(echo "$OUTPUT" | grep -oE 'https://[a-zA-Z0-9-]+\.pages\.dev' | head -1)
+          URL=$(echo "$OUTPUT" | grep -oE 'https://[^ ]*\.pages\.dev[^ ]*' | head -1 | sed 's/[[:space:]]//g')
+          if [ -z "$URL" ]; then
+            URL=$(echo "$OUTPUT" | grep -oE 'https://[a-zA-Z0-9._-]+\.pages\.dev' | head -1)
+          fi
+          echo "Deploy URL: $URL"
           echo "url=$URL" >> $GITHUB_OUTPUT
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

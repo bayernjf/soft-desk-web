@@ -18,31 +18,37 @@ export function initAnalytics() {
 
   // GA4
   if (GA_MEASUREMENT_ID) {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function gtag() {
+      // eslint-disable-next-line prefer-rest-params
+      window.dataLayer!.push(arguments);
+    } as (...args: unknown[]) => void;
+    window.gtag('consent', 'default', {
+      ad_storage: 'granted',
+      analytics_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted',
+      wait_for_update: 0,
+    });
+    window.gtag('js', new Date());
+    window.gtag('config', GA_MEASUREMENT_ID, { send_page_view: false });
+
     const script = document.createElement('script');
     script.async = true;
     script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
     document.head.appendChild(script);
-
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = function gtag(...args: unknown[]) {
-      window.dataLayer!.push(args);
-    };
-    window.gtag('js', new Date());
-    window.gtag('config', GA_MEASUREMENT_ID, { send_page_view: false });
   }
 
-  // Clarity
+  // Clarity (官方标准安装方式)
   if (CLARITY_PROJECT_ID) {
-    window.clarity =
-      window.clarity ||
-      function (...args: unknown[]) {
-        (window.clarity.q = window.clarity.q || []).push(args);
-      };
-    window.clarity.q = window.clarity.q || [];
+    window.clarity = window.clarity || function (...args: unknown[]) {
+      (window.clarity!.q = window.clarity!.q || []).push(args);
+    };
     const script = document.createElement('script');
     script.async = true;
     script.src = `https://www.clarity.ms/tag/${CLARITY_PROJECT_ID}`;
-    document.head.appendChild(script);
+    const firstScript = document.getElementsByTagName('script')[0];
+    firstScript.parentNode?.insertBefore(script, firstScript);
   }
 }
 
@@ -66,8 +72,8 @@ export function trackPageView(path?: string, title?: string) {
     console.debug('[analytics] page_view', { page_path: pagePath, page_title: pageTitle });
     return;
   }
-  if (typeof window.gtag === 'function' && GA_MEASUREMENT_ID) {
-    window.gtag('config', GA_MEASUREMENT_ID, {
+  if (typeof window.gtag === 'function') {
+    window.gtag('event', 'page_view', {
       page_path: pagePath,
       page_title: pageTitle,
     });
