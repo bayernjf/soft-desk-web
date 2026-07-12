@@ -22,6 +22,7 @@ import {
 import { Link } from 'react-router-dom';
 import { BrandMark } from '@/components/BrandMark';
 import { RadialMenu } from '@/components/RadialMenu';
+import { MacInstallGuide } from '@/components/MacInstallGuide';
 import { useSoftwareStore } from '@/stores/software.store';
 import { CATEGORIES } from '@/data/categories';
 import { formatMinutes, formatTimeAgo } from '@/services/software.service';
@@ -228,12 +229,13 @@ function Nav({ theme, toggleTheme }: { theme: 'light' | 'dark'; toggleTheme: () 
 }
 
 // Hero 区域
-function Hero({ theme }: { theme: 'light' | 'dark' }) {
+function Hero({ theme, onMacDownload }: { theme: 'light' | 'dark'; onMacDownload?: () => void }) {
   const { downloadMac, downloadWin } = useDownloadUrls();
 
   const handleDownloadMac = () => {
     track('cta_click', { cta_text: '下载Mac', cta_location: 'hero' });
     downloadMac();
+    onMacDownload?.();
   };
 
   const handleDownloadWin = () => {
@@ -1912,12 +1914,16 @@ const StatisticsSection = React.forwardRef<HTMLElement, {
 });
 
 // CTA 区域
-const CTA = React.forwardRef<HTMLElement, { theme: 'light' | 'dark' }>(({ theme }, ref) => {
+const CTA = React.forwardRef<HTMLElement, {
+  theme: 'light' | 'dark';
+  onMacDownload?: () => void;
+}>(({ theme, onMacDownload }, ref) => {
   const { downloadMac, downloadWin } = useDownloadUrls();
 
   const handleDownloadMac = () => {
     track('cta_click', { cta_text: '下载Mac', cta_location: 'bottom' });
     downloadMac();
+    onMacDownload?.();
   };
 
   const handleDownloadWin = () => {
@@ -2095,6 +2101,9 @@ function Footer({ theme }: { theme: 'light' | 'dark' }) {
 export function Landing() {
   const { theme, toggle: toggleTheme } = useTheme();
   const { software, workflows, launchSoftware, launchWorkflow } = useSoftwareStore();
+  const [macGuideOpen, setMacGuideOpen] = useState(false);
+
+  const handleMacDownload = () => setMacGuideOpen(true);
 
   useEffect(() => {
     trackPageView('/', 'SoftDesk · AI 驱动的桌面软件智能指挥中心');
@@ -2119,7 +2128,7 @@ export function Landing() {
     >
       <Nav theme={theme} toggleTheme={toggleTheme} />
       <main>
-        <Hero theme={theme} />
+        <Hero theme={theme} onMacDownload={handleMacDownload} />
         <RadialMenuSection ref={radialMenuRef} theme={theme} software={software} workflows={workflows} />
         <Stats theme={theme} />
         <AIClassifySection ref={aiClassifyRef} theme={theme} software={software} />
@@ -2127,9 +2136,12 @@ export function Landing() {
         <WorkflowSection ref={workflowRef} theme={theme} workflows={workflows} software={software} />
         <FavoritesSection ref={favoritesRef} theme={theme} workflows={workflows} software={software} />
         <StatisticsSection ref={statisticsRef} theme={theme} software={software} />
-        <CTA ref={ctaRef} theme={theme} />
+        <CTA ref={ctaRef} theme={theme} onMacDownload={handleMacDownload} />
       </main>
       <Footer theme={theme} />
+
+      {/* macOS 安装引导弹窗 */}
+      <MacInstallGuide open={macGuideOpen} onClose={() => setMacGuideOpen(false)} theme={theme} />
 
       {/* 径向菜单 */}
       <RadialMenu
