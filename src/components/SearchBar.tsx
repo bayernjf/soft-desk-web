@@ -24,6 +24,7 @@ export function SearchBar() {
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="输入描述来搜索软件，例如：'截屏工具' 或 '做表格'"
           className="flex-1 bg-transparent text-sm text-[#e6edf3] placeholder-[#6e7681] outline-none"
+          data-clarity-mask="true"
         />
         {isSearching && (
           <button
