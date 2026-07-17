@@ -228,17 +228,97 @@ function Nav({ theme, toggleTheme }: { theme: 'light' | 'dark'; toggleTheme: () 
   );
 }
 
+// 下载按钮组：根据平台检测结果高亮主推平台，展示版本号与文件大小
+function DownloadButtons({
+  theme,
+  loading,
+  version,
+  macSizeLabel,
+  winSizeLabel,
+  preferredPlatform,
+  onDownloadMac,
+  onDownloadWin,
+}: {
+  theme: 'light' | 'dark';
+  loading: boolean;
+  version: string | null;
+  macSizeLabel: string;
+  winSizeLabel: string;
+  preferredPlatform: 'mac' | 'win' | 'unknown';
+  onDownloadMac: () => void;
+  onDownloadWin: () => void;
+}) {
+  const macPrimary = preferredPlatform === 'mac';
+  const winPrimary = preferredPlatform === 'win';
+
+  const primaryCls = 'bg-primary-500 hover:bg-primary-600 text-white shadow-glow-brand';
+  const secondaryCls = theme === 'light'
+    ? 'bg-white hover:bg-slate-50 border border-slate-200 text-slate-700'
+    : 'bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-slate-200';
+
+  const VersionLabel = loading
+    ? '加载中…'
+    : version
+      ? `${version}${macSizeLabel ? ` · ${macSizeLabel}` : ''}`
+      : '';
+
+  const WinVersionLabel = loading
+    ? '加载中…'
+    : version
+      ? `${version}${winSizeLabel ? ` · ${winSizeLabel}` : ''}`
+      : '';
+
+  return (
+    <div className="flex flex-col sm:flex-row gap-3">
+      <button
+        onClick={onDownloadMac}
+        disabled={loading}
+        className={cn(
+          'w-full sm:w-auto inline-flex flex-col items-center justify-center gap-0.5 px-7 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100',
+          macPrimary || preferredPlatform === 'unknown' ? primaryCls : secondaryCls
+        )}
+      >
+        <span className="inline-flex items-center gap-2">
+          下载 Mac
+          <ArrowRight className="w-4 h-4" />
+        </span>
+        {VersionLabel && (
+          <span className="text-[11px] font-normal opacity-70">{VersionLabel}</span>
+        )}
+      </button>
+      <button
+        onClick={onDownloadWin}
+        disabled={loading}
+        className={cn(
+          'w-full sm:w-auto inline-flex flex-col items-center justify-center gap-0.5 px-7 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100',
+          winPrimary ? primaryCls : secondaryCls
+        )}
+      >
+        <span className="inline-flex items-center gap-2">
+          下载 Win
+          <ArrowRight className="w-4 h-4" />
+        </span>
+        {WinVersionLabel && (
+          <span className="text-[11px] font-normal opacity-70">{WinVersionLabel}</span>
+        )}
+      </button>
+    </div>
+  );
+}
+
 // Hero 区域
 function Hero({ theme, onMacDownload }: { theme: 'light' | 'dark'; onMacDownload?: () => void }) {
-  const { downloadMac, downloadWin } = useDownloadUrls();
+  const { downloadMac, downloadWin, loading, version, macSizeLabel, winSizeLabel, preferredPlatform } = useDownloadUrls();
 
   const handleDownloadMac = () => {
+    if (loading) return;
     track('cta_click', { cta_text: '下载Mac', cta_location: 'hero' });
     downloadMac();
     onMacDownload?.();
   };
 
   const handleDownloadWin = () => {
+    if (loading) return;
     track('cta_click', { cta_text: '下载Win', cta_location: 'hero' });
     downloadWin();
   };
@@ -296,32 +376,16 @@ function Hero({ theme, onMacDownload }: { theme: 'light' | 'dark'; onMacDownload
         </p>
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={handleDownloadMac}
-              className={cn(
-                'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
-                theme === 'light'
-                  ? 'bg-primary-500 hover:bg-primary-600 text-white'
-                  : 'bg-primary-500 hover:bg-primary-600 text-white'
-              )}
-            >
-              下载Mac
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleDownloadWin}
-              className={cn(
-                'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
-                theme === 'light'
-                  ? 'bg-primary-500 hover:bg-primary-600 text-white'
-                  : 'bg-primary-500 hover:bg-primary-600 text-white'
-              )}
-            >
-              下载Win
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+          <DownloadButtons
+            theme={theme}
+            loading={loading}
+            version={version}
+            macSizeLabel={macSizeLabel}
+            winSizeLabel={winSizeLabel}
+            preferredPlatform={preferredPlatform}
+            onDownloadMac={handleDownloadMac}
+            onDownloadWin={handleDownloadWin}
+          />
           <Link
             to="/app"
             onClick={() => track('cta_click', { cta_text: '查看在线演示', cta_location: 'hero' })}
@@ -1918,15 +1982,17 @@ const CTA = React.forwardRef<HTMLElement, {
   theme: 'light' | 'dark';
   onMacDownload?: () => void;
 }>(({ theme, onMacDownload }, ref) => {
-  const { downloadMac, downloadWin } = useDownloadUrls();
+  const { downloadMac, downloadWin, loading, version, macSizeLabel, winSizeLabel, preferredPlatform } = useDownloadUrls();
 
   const handleDownloadMac = () => {
+    if (loading) return;
     track('cta_click', { cta_text: '下载Mac', cta_location: 'bottom' });
     downloadMac();
     onMacDownload?.();
   };
 
   const handleDownloadWin = () => {
+    if (loading) return;
     track('cta_click', { cta_text: '下载Win', cta_location: 'bottom' });
     downloadWin();
   };
@@ -1976,32 +2042,16 @@ const CTA = React.forwardRef<HTMLElement, {
             重度用户每周多出近 1 小时专注工作时间。免费下载，开箱即用。
           </p>
           <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={handleDownloadMac}
-                className={cn(
-                  'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
-                  theme === 'light'
-                    ? 'bg-primary-500 hover:bg-primary-600 text-white'
-                    : 'bg-primary-500 hover:bg-primary-600 text-white'
-                )}
-              >
-                下载Mac
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <button
-                onClick={handleDownloadWin}
-                className={cn(
-                  'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold transition-all shadow-glow-brand hover:scale-[1.02]',
-                  theme === 'light'
-                    ? 'bg-primary-500 hover:bg-primary-600 text-white'
-                    : 'bg-primary-500 hover:bg-primary-600 text-white'
-                )}
-              >
-                下载Win
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+            <DownloadButtons
+              theme={theme}
+              loading={loading}
+              version={version}
+              macSizeLabel={macSizeLabel}
+              winSizeLabel={winSizeLabel}
+              preferredPlatform={preferredPlatform}
+              onDownloadMac={handleDownloadMac}
+              onDownloadWin={handleDownloadWin}
+            />
             <Link
               to="/app"
               onClick={() => track('cta_click', { cta_text: '进入在线演示', cta_location: 'bottom' })}
