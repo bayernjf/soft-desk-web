@@ -40,7 +40,7 @@ export function SoftwareCard({ software, variant = 'default' }: SoftwareCardProp
           {software.name.slice(0, 2)}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium text-slate-100 truncate">{software.name}</div>
+          <div className="text-sm font-medium text-slate-100 truncate" data-clarity-mask="true">{software.name}</div>
           <div className="text-xs text-slate-500 truncate">{categoryMeta?.name}</div>
         </div>
         <Play className="w-3.5 h-3.5 text-slate-500 shrink-0" />
@@ -68,10 +68,10 @@ export function SoftwareCard({ software, variant = 'default' }: SoftwareCardProp
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <h3 className="text-base font-semibold text-white truncate group-hover:text-white">
+                <h3 className="text-base font-semibold text-white truncate group-hover:text-white" data-clarity-mask="true">
                   {software.name}
                 </h3>
-                <p className="text-sm text-slate-500 mt-0.5 truncate">{software.description}</p>
+                <p className="text-sm text-slate-500 mt-0.5 truncate" data-clarity-mask="true">{software.description}</p>
               </div>
             </div>
 
@@ -128,8 +128,8 @@ export function SoftwareCard({ software, variant = 'default' }: SoftwareCardProp
           {software.name.slice(0, 2)}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-slate-100 truncate">{software.name}</h3>
-          <p className="text-xs text-slate-500 truncate mt-0.5">{software.description}</p>
+          <h3 className="text-sm font-semibold text-slate-100 truncate" data-clarity-mask="true">{software.name}</h3>
+          <p className="text-xs text-slate-500 truncate mt-0.5" data-clarity-mask="true">{software.description}</p>
           <div className="flex items-center gap-2.5 mt-1.5 text-xs text-slate-500">
             <span>{categoryMeta?.name}</span>
             <span className="text-slate-700">•</span>

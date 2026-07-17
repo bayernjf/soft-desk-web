@@ -9,11 +9,16 @@ import { MyShares } from '@/pages/MyShares';
 import { Statistics } from '@/pages/Statistics';
 import { Uninstall } from '@/pages/Uninstall';
 import { Settings } from '@/pages/Settings';
+import { Privacy } from '@/pages/Privacy';
 
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <Landing />,
+  },
+  {
+    path: '/privacy',
+    element: <Privacy theme="light" />,
   },
   {
     path: '/app',

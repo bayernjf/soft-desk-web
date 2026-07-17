@@ -53,7 +53,7 @@ export function SoftwareCard({ software, index }: SoftwareCardProps) {
         </div>
 
         {/* Name */}
-        <h3 className="text-sm font-medium text-[#e6edf3] text-center truncate mb-1">
+        <h3 className="text-sm font-medium text-[#e6edf3] text-center truncate mb-1" data-clarity-mask="true">
           {software.name}
         </h3>
 

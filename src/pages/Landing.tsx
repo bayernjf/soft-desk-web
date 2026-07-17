@@ -18,19 +18,29 @@ import {
   Zap,
   X,
   Monitor,
+  Settings,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BrandMark } from '@/components/BrandMark';
 import { RadialMenu } from '@/components/RadialMenu';
 import { MacInstallGuide } from '@/components/MacInstallGuide';
+import { CookieBanner } from '@/components/CookieBanner';
 import { useSoftwareStore } from '@/stores/software.store';
 import { CATEGORIES } from '@/data/categories';
 import { formatMinutes, formatTimeAgo } from '@/services/software.service';
 import { cn } from '@/lib/utils';
-import { track, trackPageView } from '@/lib/analytics';
+import {
+  getStoredConsent,
+  initAnalytics,
+  setStoredConsent,
+  track,
+  trackPageView,
+  updateConsent,
+} from '@/lib/analytics';
 import { useSectionVisibility, useScrollDepthTracking } from '@/hooks/useAnalytics';
 import { useDownloadUrls } from '@/hooks/useDownloadUrls';
 import type { Software, Workflow as WorkflowType } from '@/types';
+import type { ConsentState } from '@/lib/analytics';
 
 // 主题切换 Hook
 function useTheme() {
@@ -128,6 +138,7 @@ function useNaturalSearch(software: Software[]) {
 function Logo({ theme }: { theme: 'light' | 'dark' }) {
   return (
     <div className="flex items-center gap-2.5">
+      <a href="/">
       <BrandMark
         className={cn(
           'w-8 h-8 rounded-lg shadow-glow-brand',
@@ -135,6 +146,7 @@ function Logo({ theme }: { theme: 'light' | 'dark' }) {
         )}
         gradientId="softdesk-nav"
       />
+      </a>
       <span
         className={cn(
           'text-lg font-bold tracking-tight',
@@ -2072,7 +2084,7 @@ const CTA = React.forwardRef<HTMLElement, {
 });
 
 // Footer
-function Footer({ theme }: { theme: 'light' | 'dark' }) {
+function Footer({ theme, onOpenAnalyticsSettings }: { theme: 'light' | 'dark'; onOpenAnalyticsSettings: () => void }) {
   return (
     <footer
       className={cn(
@@ -2129,6 +2141,29 @@ function Footer({ theme }: { theme: 'light' | 'dark' }) {
             下载
           </a>
           <a
+            href="/privacy"
+            onClick={() => track('footer_link_click', { link: '隐私政策' })}
+            className={cn(
+              'transition-colors',
+              theme === 'light' ? 'hover:text-slate-700' : 'hover:text-slate-300'
+            )}
+          >
+            隐私政策
+          </a>
+          <button
+            onClick={() => {
+              onOpenAnalyticsSettings();
+              track('footer_link_click', { link: '分析偏好' });
+            }}
+            className={cn(
+              'flex items-center gap-1 transition-colors',
+              theme === 'light' ? 'hover:text-slate-700' : 'hover:text-slate-300'
+            )}
+          >
+            <Settings className="w-3.5 h-3.5" />
+            分析偏好
+          </button>
+          <a
             href="https://github.com/bayernjf/soft-desk"
             target="_blank"
             rel="noopener noreferrer"
@@ -2152,12 +2187,23 @@ export function Landing() {
   const { theme, toggle: toggleTheme } = useTheme();
   const { software, workflows, launchSoftware, launchWorkflow } = useSoftwareStore();
   const [macGuideOpen, setMacGuideOpen] = useState(false);
+  const [cookieSettingsVersion, setCookieSettingsVersion] = useState(0);
 
   const handleMacDownload = () => setMacGuideOpen(true);
 
   useEffect(() => {
     trackPageView('/', 'SoftDesk · AI 驱动的桌面软件智能指挥中心');
+    initAnalytics(getStoredConsent() ?? undefined);
   }, []);
+
+  const handleConsentChange = (consent: ConsentState) => {
+    updateConsent(consent);
+    setStoredConsent(consent);
+  };
+
+  const handleOpenAnalyticsSettings = () => {
+    setCookieSettingsVersion((version) => version + 1);
+  };
 
   useScrollDepthTracking();
 
@@ -2188,10 +2234,18 @@ export function Landing() {
         <StatisticsSection ref={statisticsRef} theme={theme} software={software} />
         <CTA ref={ctaRef} theme={theme} onMacDownload={handleMacDownload} />
       </main>
-      <Footer theme={theme} />
+      <Footer theme={theme} onOpenAnalyticsSettings={handleOpenAnalyticsSettings} />
 
       {/* macOS 安装引导弹窗 */}
       <MacInstallGuide open={macGuideOpen} onClose={() => setMacGuideOpen(false)} theme={theme} />
+
+      {/* Cookie 同意弹窗 */}
+      <CookieBanner
+        key={cookieSettingsVersion}
+        theme={theme}
+        onConsentChange={handleConsentChange}
+        initialShowSettings={cookieSettingsVersion > 0}
+      />
 
       {/* 径向菜单 */}
       <RadialMenu
