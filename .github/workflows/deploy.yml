@@ -235,6 +235,29 @@ jobs:
           VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
           VITE_CLARITY_PROJECT_ID: ${{ secrets.VITE_CLARITY_PROJECT_ID }}
 
+      - name: Install Playwright Chromium
+        run: npx --yes playwright@1.54.0 install --with-deps chromium
+
+      - name: Generate production preview image
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/softdesk-preview.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          if ! curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+            cat /tmp/softdesk-preview.log
+            exit 1
+          fi
+          npx --yes playwright@1.54.0 screenshot \
+            --device="Desktop Chrome" \
+            --viewport-size="1200,630" \
+            --wait-for-timeout=1000 \
+            http://127.0.0.1:4173/ \
+            dist/preview.png
+
       - name: Deploy to Cloudflare Pages (Production)
         run: wrangler pages deploy dist --project-name=soft-desk-landing --branch=main --commit-dirty=true
         env:
