@@ -3,15 +3,9 @@ name: Generate Preview Screenshot
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-      - dev
+    branches: [main]
     paths-ignore:
       - public/preview.png
-  pull_request:
-    branches:
-      - main
-      - dev
 
 permissions:
   actions: write
@@ -19,6 +13,7 @@ permissions:
 
 jobs:
   screenshot:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
