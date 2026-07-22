@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   screenshot:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
